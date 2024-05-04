@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "jarvis"
+version = "0.1.0"
+description = ""
+authors = ["Danilo <danilocatone@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.11"
+ollama = "^0.1.9"
+openai-whisper = { git = "https://github.com/openai/whisper.git" }
+pvrecorder = "^1.2.2"
+wave = "^0.0.2"
+tts = "^0.22.0"
+pydub = "^0.25.1"
+pyaudio = "^0.2.14"
+flet = "^0.22.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
