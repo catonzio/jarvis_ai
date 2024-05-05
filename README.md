@@ -16,7 +16,22 @@ A brief description of your project.
 
 ## Installation
 
-Instructions on how to install and set up your project.
+In order to install the project, you need to follow these steps:
+
+1. Clone the repository
+
+    ```bash
+    git clone https://github.com/catonzio/jarvis_ai
+    ```
+
+2. Install [poetry](https://python-poetry.org/) following the instructions on the [website](https://python-poetry.org/docs/main/).
+3. Install the dependencies
+
+    ```bash
+    poetry install
+    ```
+
+4. Install [Ollama](https://ollama.com/) following the instructions on the website.
 
 ## Usage
 
