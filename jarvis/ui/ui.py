@@ -3,79 +3,75 @@ import asyncio
 import flet as ft
 
 from jarvis.core.recorder_component import RecorderComponent
+from jarvis.core.stt_component import SttComponent
+from jarvis.ui.recording_button import RecordingButton
+from jarvis.ui.recording_timer import RecordingTimer
+
+PAGE_WIDTH = 1080 / 2
+PAGE_HEIGHT = 1920 / 2
 
 
-class RecordingTimer(ft.Text):
+class JarvisApp(ft.Stack):
 
-    def __init__(self, recorder: RecorderComponent):
+    def __init__(self):
         super().__init__()
-        self.seconds = 0
-        self.running = recorder.is_recording
-        self.value = str(self.seconds)
+        self.transcription: str = ""
+        self.audio_output_path: str = "tmp/recording.wav"
+        self.recorder: RecorderComponent = RecorderComponent(
+            output_path=self.audio_output_path
+        )
+        self.stt = SttComponent()
 
-    def did_mount(self):
-        print("RecordingTimer did_mount")
-        self.start_timer()
-        return super().did_mount()
+    def make_transcription(self) -> None:
+        self.transcription = self.stt.transcribe(self.audio_output_path)["text"]
+        print("Transcription: ", self.transcription)
 
-    def start_timer(self):
-        self.running = True
-        self.page.run_task(self.update_timer)
-        self.update()
+    def build(self):
+        recording_timer = RecordingTimer(self.recorder)
+        record_transcription = ft.Text(
+            "",
+            size=20,
+            no_wrap=False,
+            width=PAGE_WIDTH * 0.8,
+            height=PAGE_HEIGHT * 0.2,
+            color="white",
+        )
 
-    def stop_timer(self):
-        self.running = False
-
-    def before_update(self):
-        print("RecordingTimer before_update")
-        if self.running:
-            self.start_timer()
-        else:
-            self.stop_timer()
-
-    async def update_timer(self):
-        while self.seconds and self.running:
-            print(self.seconds)
-            mins, secs = divmod(self.seconds, 60)
-            self.value = "{:02d}:{:02d}".format(mins, secs)
+        def on_recording_end():
+            recording_timer.stop_timer()
+            self.make_transcription()
+            record_transcription.value = self.transcription
             self.update()
-            await asyncio.sleep(1)
-            self.seconds -= 1
 
-
-class RecordingButton(ft.ElevatedButton):
-
-    def __init__(self, recorder_component: RecorderComponent):
-        super().__init__()
-        self.recorder = recorder_component
-        self.text = (
-            "Stop Recording" if self.recorder.is_recording else "Start Recording"
+        recording_button = RecordingButton(
+            recorder=self.recorder,
+            start_callback=recording_timer.start_timer,
+            end_callback=on_recording_end,
         )
-        self.on_click = self.click
 
-    def click(self, e):
-        self.recorder.toggle_is_recording()
-        self.text = (
-            "Stop Recording" if self.recorder.is_recording else "Start Recording"
+        return ft.Column(
+            [
+                ft.Container(
+                    record_transcription,
+                    bgcolor="black",
+                ),
+                recording_timer,
+                ft.Text("Press the button to start recording."),
+                recording_button,
+                # recording_button(page, recorder),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
-        self.update()
-        if self.recorder.is_recording:
-            pass
-            # self.recorder.record()
 
 
 def main(page: ft.Page):
+    page.window_width = PAGE_WIDTH
+    page.window_height = PAGE_HEIGHT
     page.title = "Jarvis AI"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.update()
 
-    recorder: RecorderComponent = RecorderComponent(output_path="tmp/recording.wav")
-    page.add(
-        ft.Column(
-            [
-                RecordingTimer(recorder),
-                ft.Text("Press the button to start recording."),
-                RecordingButton(recorder_component=recorder),
-            ]
-        )
-    )
+    jarvis_app = JarvisApp()
+    page.add(jarvis_app)

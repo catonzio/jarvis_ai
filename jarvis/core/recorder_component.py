@@ -40,18 +40,16 @@ class RecorderComponent:
                     )
                 )
             self.recorder.start()
-            print("Recording", end="", flush=True)
             while self.is_recording:
                 frame = self.recorder.read()
                 if wavfile is not None:
                     wavfile.writeframes(struct.pack("h" * len(frame), *frame))
-                    print(".", end="", flush=True)
-            print()
-            print("Stopping...")
+        except OSError as e:
+            print("Error while recording: ", e)
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
-            self.recorder.delete()
+            self.recorder.stop()
             if wavfile is not None:
                 wavfile.close()
             self.is_recording = False
